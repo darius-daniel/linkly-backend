@@ -35,38 +35,34 @@ app.post('/sign_up', async (request, response) => {
   }
 });
 
-app.post('/is_available/', async (request, response) => {
-  const { username } = request.body;
+app.get('/getUsernameAvailability/:username', async (request, response) => {
+  const { username } = request.params;
   const user = await User.findOne({ where: { username } });
   if (user) response.send(false);
   else response.send(true);
 });
 
-app.post('/get_user', async (request, response) => {
-  const { userId } = request.body;
+app.get('/getUserById/:userId', async (request, response) => {
+  const { userId } = request.params;
   const user = await User.findByPk(userId);
 
   if (user) response.send(user).status(200);
   else response.sendStatus(404);
 });
 
-app.post('/', async (request, response) => {
-  const { longUrl } = request.body;
-  const shortUrl = generateShortLink();
-
-  const link = await Link.create({ longUrl, shortUrl });
-  if (link) response.send(link).status(204);
-  else response.sendStatus(500);
-});
-
-app.post('/:userId', async (request, response) => {
+app.post('/createLinkForUser/:userId', async (request, response) => {
   const { userId } = request.params;
   const { longUrl } = request.body;
-  const shortUrl = generateShortLink();
+  let shortUrl;
+  do {
+    shortUrl = generateShortLink()
+  } while (await Link.findOne({ where: { shortUrl } }) !== null);
+
   const user = await User.findByPk(userId);
-  const link = await Link.create({ longUrl, shortUrl, userId });
+  const link = await Link.create({ longUrl, shortUrl });
 
   if (link) {
+    user.addLink(link)
     response.send(link).status(204);
   } else response.sendStatus(500);
 });
@@ -77,12 +73,20 @@ app.get('/:shortUrl', async (request, response) => {
   const link = await Link.findOne({ where: { shortUrl } });
 
   if (link) {
-    const { linkId, clicks, longUrl } = link;
+    const { longUrl } = link;
 
     link.increment('clicks');
     response.redirect(`http://localhost:5173/${longUrl}`);
   } else response.sendStatus(404);
 });
+
+app.get('/getLinksByUserId/:userId', async (request, response) => {
+  const { userId } = request.params;
+  const links = await Link.findAll({ where: { userId } });
+
+  if (links) response.send(links).status(200);
+  else response.sendStatus(404);
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
