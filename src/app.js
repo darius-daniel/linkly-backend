@@ -8,7 +8,7 @@ import generateShortLink from './utils/generateShortLink.js';
 
 const app = express();
 const port = 5000;
-const frontendDomainName = 'http://127.0.0.1:5000/';
+const domainName = 'https://linkly-1xxj.onrender.com:5000';
 
 app.use(express.json());
 app.use(cors());
@@ -58,7 +58,7 @@ app.post('/createLinkForUser/:userId', async (request, response) => {
 
   let shortUrl;
   do {
-    shortUrl = `${frontendDomainName}${generateShortLink()}`;
+    shortUrl = `${domainName}${generateShortLink()}`;
   } while ((await Link.findOne({ where: { shortUrl } })) !== null);
 
   const user = await User.findByPk(userId);
