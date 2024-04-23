@@ -1,15 +1,10 @@
 import { Sequelize } from 'sequelize';
 import { PostgresDialect } from '@sequelize/postgres';
 
-const sequelize = new Sequelize({
-  dialect: PostgresDialect,
-  database: 'linkly_db',
-  user: 'default',
-  password: 'irSv2BA9DjUg',
-  host: 'ep-lucky-paper-a41r2r8q.us-east-1.aws.neon.tech',
-  port: 5432,
-  ssl: true,
-  clientMinMessages: 'notice',
+const sequelize = new Sequelize('Linkly', 'darius', 'D9G8Va9PY7MSVL6Li%40iu', {
+  host: 'nnwplcuask.sqlite.cloud:8860',
+  dialect: 'sqlite',
+  logging: false,
 });
 
 async function testConnection() {

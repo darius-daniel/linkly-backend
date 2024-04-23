@@ -43,11 +43,11 @@ const Link = sequelize.define(
   }
 );
 
-User.hasMany(Link, { foreignKey: 'userId' })
+User.hasMany(Link, { foreignKey: 'userId' });
 Link.belongsTo(User, { foreignKey: 'userId' });
 
 (async () => {
-  await sequelize.sync({ force: true });
+  await sequelize.sync();
 })();
 
 export { User, Link };

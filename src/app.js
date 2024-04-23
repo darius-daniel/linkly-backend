@@ -1,12 +1,14 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import cors from 'cors';
+import { Op } from 'sequelize';
 
 import { User, Link } from './db/models.js';
 import generateShortLink from './utils/generateShortLink.js';
 
 const app = express();
 const port = 5000;
+const domainName = 'https://linkly-1xxj.onrender.com';
 
 app.use(express.json());
 app.use(cors());
@@ -53,30 +55,34 @@ app.get('/getUserById/:userId', async (request, response) => {
 app.post('/createLinkForUser/:userId', async (request, response) => {
   const { userId } = request.params;
   const { longUrl } = request.body;
+
   let shortUrl;
   do {
-    shortUrl = generateShortLink()
-  } while (await Link.findOne({ where: { shortUrl } }) !== null);
+    shortUrl = `${domainName}/${generateShortLink()}`;
+  } while ((await Link.findOne({ where: { shortUrl } })) !== null);
 
   const user = await User.findByPk(userId);
-  const link = await Link.create({ longUrl, shortUrl });
 
-  if (link) {
-    user.addLink(link)
+  try {
+    const link = await Link.create({ longUrl, shortUrl });
+
+    user.addLink(link);
     response.send(link).status(204);
-  } else response.sendStatus(500);
+  } catch (error) {
+    console.error(error.message);
+    response.sendStatus(500);
+  }
 });
 
 app.get('/:shortUrl', async (request, response) => {
-  console.log(request.params);
   const { shortUrl } = request.params;
-  const link = await Link.findOne({ where: { shortUrl } });
+  const link = await Link.findOne({
+    where: { shortUrl: { [Op.like]: `%${shortUrl}` } },
+  });
 
   if (link) {
-    const { longUrl } = link;
-
     link.increment('clicks');
-    response.redirect(`http://localhost:5173/${longUrl}`);
+    response.redirect(link.longUrl);
   } else response.sendStatus(404);
 });
 
@@ -86,8 +92,8 @@ app.get('/getLinksByUserId/:userId', async (request, response) => {
 
   if (links) response.send(links).status(200);
   else response.sendStatus(404);
-})
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`linkly-backend listening on port ${port}`);
 });
